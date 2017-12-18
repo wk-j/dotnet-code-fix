@@ -1,8 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <!-- <MSBuildSDKsPath>/Library/Frameworks/Mono.framework/Versions/Current/lib/mono/msbuild/15.0/bin/Sdks</MSBuildSDKsPath> -->
+    <!-- <MSBuildSDKsPath>/usr/local/share/dotnet/sdk/2.1.2/Sdks</MSBuildSDKsPath> -->
     <OutputType>Library</OutputType>
     <AssmblyName>HelloWorld</AssmblyName>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>

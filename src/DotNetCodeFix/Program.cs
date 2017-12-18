@@ -16,14 +16,18 @@ namespace DotNetCodeFix
     {
         static async Task Main(string[] args)
         {
-            //Environment.SetEnvironmentVariable("MSBUILD_EXE_PATH", "/Library/Frameworks/Mono.framework/Versions/Current/Commands/msbuild");
+            Environment.SetEnvironmentVariable("MSBUILD_EXE_PATH", "/Library/Frameworks/Mono.framework/Versions/Current/Commands/msbuild");
+            Environment.SetEnvironmentVariable("COREHOST_TRACE", "1");
+
+            // Environment.SetEnvironmentVariable("MSBuildSDKsPath", "/usr/local/share/dotnet/sdk/2.1.2/Sdks");
+            Environment.SetEnvironmentVariable("MSBuildSDKsPath", "/Library/Frameworks/Mono.framework/Versions/Current/lib/mono/msbuild/15.0/bin/Sdks");
 
 
             var workspace = MSBuildWorkspace.Create();
             workspace.WorkspaceFailed += (s, e) => { Console.WriteLine(e.Diagnostic); };
 
             var project = await workspace.OpenProjectAsync("/Users/wk/Source/github/DotNetCodeFix/tests/MyApp/MyApp.csproj");
-            // var project = await workspace.OpenProjectAsync("/Users/wk/Source/project/standard/easy-capture/EasyCapture/EasyCapture.csproj");
+            //var project = await workspace.OpenProjectAsync("/Users/wk/Source/project/standard/easy-capture/EasyCapture/EasyCapture.csproj");
 
             Console.WriteLine($"Documents: {project.Documents.Count()}");
             Console.WriteLine($"AssemblyName: {project.AssemblyName}");
