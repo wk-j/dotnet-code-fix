@@ -16,10 +16,12 @@ namespace DotNetCodeFix
     {
         static async Task Main(string[] args)
         {
-            Environment.SetEnvironmentVariable("MSBUILD_EXE_PATH", "/Library/Frameworks/Mono.framework/Versions/Current/Commands/msbuild");
+            //Environment.SetEnvironmentVariable("MSBUILD_EXE_PATH", "/Library/Frameworks/Mono.framework/Versions/Current/Commands/msbuild");
 
 
             var workspace = MSBuildWorkspace.Create();
+            workspace.WorkspaceFailed += (s, e) => { Console.WriteLine(e.Diagnostic); };
+
             var project = await workspace.OpenProjectAsync("/Users/wk/Source/github/DotNetCodeFix/tests/MyApp/MyApp.csproj");
             // var project = await workspace.OpenProjectAsync("/Users/wk/Source/project/standard/easy-capture/EasyCapture/EasyCapture.csproj");
 
