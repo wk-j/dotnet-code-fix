@@ -7,13 +7,14 @@ using Microsoft.CodeAnalysis.Text;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp;
+using System.Threading;
+using Microsoft.CodeAnalysis.CodeActions;
+using Microsoft.CodeAnalysis.CodeFixes;
+using System.Collections.Generic;
 
-namespace DotNetCodeFix.AdhocWorkspace
-{
-    class Program
-    {
-        static async Task Main(string[] args)
-        {
+namespace DotNetCodeFix.AdhocWorkspaces {
+    class Program {
+        static (AdhocWorkspace, Project) CreateWorkspace() {
             var workspace = new Microsoft.CodeAnalysis.AdhocWorkspace();
             workspace.WorkspaceFailed += (s, e) => { Console.WriteLine(e.Diagnostic); };
 
@@ -22,28 +23,36 @@ namespace DotNetCodeFix.AdhocWorkspace
             var versionStamp = VersionStamp.Create();
             var projectInfo = ProjectInfo.Create(projectId, versionStamp, projName, projName, LanguageNames.CSharp);
             var newProject = workspace.AddProject(projectInfo);
+            return (workspace, newProject);
+        }
 
-            var ns = new[] {
-                "System",
-                "System.IO"
-             };
+        static SourceText CreateSourceText() {
 
             var code = @"
-using System; 
+using System;
 using System.Threading.Tasks;
 class A { 
-    static void Main(string[] args) { } 
-    static async Task B() {  
-        await Task.Run(() => {});
+    static void Main(string[] args) { 
+
     } 
-}
-             ";
+    static async Task B() {  
+        await Task.Run(() => {
+            
+        });
+    } 
+} ";
 
             var sourceText = SourceText.From(code);
+            return sourceText;
+        }
 
-            var newDocument = workspace.AddDocument(newProject.Id, "NewFile.cs", sourceText);
-            //var documentA = newProject.AddDocument("A", sourceText);
+        async Task K() {
+            await Task.Run(() => {
 
+            });
+        }
+
+        static ImmutableArray<DiagnosticAnalyzer>.Builder CreateAnalyzer() {
             var analyzers = ImmutableArray.CreateBuilder<DiagnosticAnalyzer>();
             Assembly.GetAssembly(typeof(AsyncMethodWithoutAsyncSuffixAnalyzer))
                 .GetTypes()
@@ -52,46 +61,76 @@ class A {
                 .Cast<DiagnosticAnalyzer>()
                 .ToList()
             .ForEach(analyzers.Add);
+            return analyzers;
+        }
 
-            foreach (var doc in newProject.Documents)
-            {
-                Console.WriteLine($"Document: {doc.Name}");
-            }
+        static async Task Main(string[] args) {
+            var (workspace, project) = CreateWorkspace();
+            var sourceText = CreateSourceText();
+            var document = workspace.AddDocument(project.Id, "NewFile.cs", sourceText);
+            var analyzers = CreateAnalyzer();
 
-            CSharpCompilationOptions DefaultCompilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+            var ns = new[] {
+                "System",
+                "System.Threading.Tasks",
+                "System.IO"
+             };
+
+            var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
                .WithOverflowChecks(true)
-               .WithPlatform(Platform.X86)
-               .WithOptimizationLevel(OptimizationLevel.Release)
-               .WithUsings(ns);
+               .WithPlatform(Platform.X64)
+               .WithUsings(ns)
+               .WithOptimizationLevel(OptimizationLevel.Release);
 
-            var DefaultReferences = new[] {
+            var references = new[] {
                     MetadataReference.CreateFromFile(typeof (object).Assembly.Location),
                     MetadataReference.CreateFromFile(typeof (System.Linq.Enumerable).Assembly.Location),
                     MetadataReference.CreateFromFile(typeof (System.GenericUriParser).Assembly.Location),
                     MetadataReference.CreateFromFile(typeof (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException).Assembly.Location)
             };
 
-            var compilation = CSharpCompilation.Create("Hello", new[] { newDocument.GetSyntaxTreeAsync().Result }).WithReferences(DefaultReferences);
+            var compilation =
+                CSharpCompilation.Create("Hello.dll", new[] { await document.GetSyntaxTreeAsync() })
+                .WithOptions(compilationOptions)
+                .WithReferences(references);
 
-            //var compilation = await newProject.GetCompilationAsync();
-            foreach (var analyzer in analyzers)
-            {
+
+
+            var a0 = analyzers.AsEnumerable().ElementAt(0);
+            var rs = await compilation.WithAnalyzers(ImmutableArray.Create(a0)).GetAllDiagnosticsAsync();
+
+            // ??????
+            var provider = new AsyncMethodWithoutAsyncSuffixCodeFix();
+
+            var actions = new List<CodeAction>();
+            var context = new CodeFixContext(document, rs[0],
+                            (a, d) => actions.Add(a), CancellationToken.None);
+
+            Console.WriteLine(actions.Count);
+
+            provider.RegisterCodeFixesAsync(context).Wait();
+
+            var operations = actions[0].GetOperationsAsync(CancellationToken.None).Result;
+            var solution = operations.OfType<ApplyChangesOperation>().Single().ChangedSolution;
+
+            var newDoc = solution.GetDocument(document.Id);
+            Console.WriteLine(newDoc.GetTextAsync().Result);
+
+            /* 
+            foreach (var analyzer in analyzers) {
                 var diagnosticResults = await compilation.WithAnalyzers(ImmutableArray.Create(analyzer)).GetAllDiagnosticsAsync();
                 var interestingResults = diagnosticResults.ToArray();
-                if (interestingResults.Any())
-                {
-                    Console.WriteLine($"Results for analyzer: {analyzer}");
-                }
 
-                foreach (var diagnostic in interestingResults)
-                {
-                    if (diagnostic.Severity != DiagnosticSeverity.Hidden)
-                    {
-                        Console.WriteLine($"Severity: {diagnostic.Severity} {diagnostic.Location} {string.Join(", ", diagnostic.Properties)}");
+
+
+                foreach (var diagnostic in interestingResults) {
+                    if (diagnostic.Severity != DiagnosticSeverity.Hidden) {
+                        Console.WriteLine($"Severity: {diagnostic.Severity}, {diagnostic.Location}, {diagnostic.Descriptor}");
                         Console.WriteLine($"Message: {diagnostic.GetMessage()}");
                     }
                 }
             }
+            */
         }
     }
 }
