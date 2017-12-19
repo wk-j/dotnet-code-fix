@@ -26,7 +26,8 @@ namespace DotNetCodeFix
             var workspace = MSBuildWorkspace.Create();
             workspace.WorkspaceFailed += (s, e) => { Console.WriteLine(e.Diagnostic); };
 
-            var project = await workspace.OpenProjectAsync("/Users/wk/Source/github/DotNetCodeFix/tests/MyApp/MyApp.csproj");
+            var project = await workspace.OpenProjectAsync("/Users/wk/Source/DotNetCodeFix/tests/MyApp/MyApp.csproj");
+            //var project = await workspace.OpenProjectAsync("/Users/wk/Source/github/DotNetCodeFix/tests/MyApp/MyApp.csproj");
             //var project = await workspace.OpenProjectAsync("/Users/wk/Source/project/standard/easy-capture/EasyCapture/EasyCapture.csproj");
 
             Console.WriteLine($"Documents: {project.Documents.Count()}");
