@@ -64,6 +64,36 @@ class A {
             return analyzers;
         }
 
+        static void Test1(Document document, CSharpCompilation compilation) {
+
+            var analyzer = CreateAnalyzer().ElementAt(0);
+
+            var all = compilation.WithAnalyzers(ImmutableArray.Create(analyzer)).GetAllDiagnosticsAsync().Result;
+            var first = all.Skip(1).First();
+            var span = first.Location.SourceSpan;
+
+            Console.WriteLine($"All = {string.Join(",", all.Select(x => x.GetMessage()))}");
+            Console.WriteLine($"First = {first}");
+            Console.WriteLine($"Span = {span}");
+
+            var actions = new List<CodeAction>();
+
+            var context = new CodeFixContext(document, first, (c, d) => {
+                Console.WriteLine(c);
+                Console.WriteLine(d);
+                actions.Add(c);
+            }, CancellationToken.None);
+
+            var provider = new AsyncMethodWithoutAsyncSuffixCodeFix();
+            provider.RegisterCodeFixesAsync(context).Wait();
+
+            var operations = actions[0].GetOperationsAsync(CancellationToken.None).Result;
+            var solution = operations.OfType<ApplyChangesOperation>().Single().ChangedSolution;
+            var newDoc = solution.GetDocument(document.Id);
+
+            Console.WriteLine(newDoc.GetTextAsync().Result);
+        }
+
         static async Task Main(string[] args) {
             var (workspace, project) = CreateWorkspace();
             var sourceText = CreateSourceText();
@@ -95,28 +125,6 @@ class A {
                 .WithReferences(references);
 
 
-
-            var a0 = analyzers.AsEnumerable().ElementAt(0);
-            var rs = await compilation.WithAnalyzers(ImmutableArray.Create(a0)).GetAllDiagnosticsAsync();
-
-            // ??????
-            var provider = new AsyncMethodWithoutAsyncSuffixCodeFix();
-
-            var actions = new List<CodeAction>();
-            var context = new CodeFixContext(document, rs[0],
-                            (a, d) => actions.Add(a), CancellationToken.None);
-
-            Console.WriteLine(actions.Count);
-
-            provider.RegisterCodeFixesAsync(context).Wait();
-
-            var operations = actions[0].GetOperationsAsync(CancellationToken.None).Result;
-            var solution = operations.OfType<ApplyChangesOperation>().Single().ChangedSolution;
-
-            var newDoc = solution.GetDocument(document.Id);
-            Console.WriteLine(newDoc.GetTextAsync().Result);
-
-            /* 
             foreach (var analyzer in analyzers) {
                 var diagnosticResults = await compilation.WithAnalyzers(ImmutableArray.Create(analyzer)).GetAllDiagnosticsAsync();
                 var interestingResults = diagnosticResults.ToArray();
@@ -130,7 +138,8 @@ class A {
                     }
                 }
             }
-            */
+
+            Test1(document, compilation);
         }
     }
 }
