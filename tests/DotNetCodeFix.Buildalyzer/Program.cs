@@ -200,8 +200,8 @@ class Program {
         var equivalenceGroups = new List<CodeFixEquivalenceGroup>();
         var diagnostics = await GetAnalyzerDiagnosticsAsync(roslynProject, analyzers, cts.Token).ConfigureAwait(true);
 
-        var solution = workspace.CurrentSolution;
-        Console.WriteLine($"Solution = {solution.FilePath}");
+        var empty = new AdhocWorkspace();
+        var solution = empty.AddSolution(SolutionInfo.Create(SolutionId.CreateNewId(), VersionStamp.Create(DateTime.Now), "/Users/wk/Temp/MyApp.sln"));
 
         foreach (var codeFixer in codeFixers) {
             //Console.WriteLine($"{codeFixer.GetFixAllProvider().GetType().Name}");
@@ -210,11 +210,16 @@ class Program {
 
         var stopwatch = new Stopwatch();
 
+
         foreach (var fix in equivalenceGroups) {
             try {
                 stopwatch.Restart();
                 Console.WriteLine($"Calculating fix for {fix.CodeFixEquivalenceKey} using {fix.FixAllProvider} for {fix.NumberOfDiagnostics} instances.");
-                await fix.GetOperationsAsync(cts.Token).ConfigureAwait(true);
+                var rs = await fix.GetOperationsAsync(cts.Token).ConfigureAwait(true);
+                foreach (var item in rs) {
+                    Console.WriteLine($"Apply {item.Title}");
+                    item.Apply(empty, cts.Token);
+                }
                 WriteLine($"Calculating changes completed in {stopwatch.ElapsedMilliseconds}ms. This is {fix.NumberOfDiagnostics / stopwatch.Elapsed.TotalSeconds:0.000} instances/second.", ConsoleColor.Yellow);
             } catch (Exception ex) {
                 // Report thrown exceptions
