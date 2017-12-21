@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.CSharp;
@@ -10,12 +10,9 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using System.Threading;
 
-namespace DotNetCodeFix
-{
-    class Program
-    {
-        static async Task Main(string[] args)
-        {
+namespace DotNetCodeFix {
+    class Program {
+        static async Task Main(string[] args) {
             Environment.SetEnvironmentVariable("MSBUILD_EXE_PATH", "/Library/Frameworks/Mono.framework/Versions/Current/Commands/msbuild");
             Environment.SetEnvironmentVariable("COREHOST_TRACE", "1");
 
@@ -53,20 +50,16 @@ namespace DotNetCodeFix
             Console.WriteLine($"Types: {string.Join(", ", allTypes)}");
 
 
-            foreach (var analyzer in analyzers)
-            {
+            foreach (var analyzer in analyzers) {
                 var diagnosticResults = await compilation.WithAnalyzers(ImmutableArray.Create(analyzer)).GetAllDiagnosticsAsync();
                 //var interestingResults = diagnosticResults.Where(x => x.Severity != DiagnosticSeverity.Hidden).ToArray();
                 var interestingResults = diagnosticResults.ToArray();
-                if (interestingResults.Any())
-                {
+                if (interestingResults.Any()) {
                     Console.WriteLine($"Results for analyzer: {analyzer}");
                 }
 
-                foreach (var diagnostic in interestingResults)
-                {
-                    if (diagnostic.Severity != DiagnosticSeverity.Hidden)
-                    {
+                foreach (var diagnostic in interestingResults) {
+                    if (diagnostic.Severity != DiagnosticSeverity.Hidden) {
                         Console.WriteLine($"Severity: {diagnostic.Severity}");
                         Console.WriteLine($"Message: {diagnostic.GetMessage()}");
                     }
