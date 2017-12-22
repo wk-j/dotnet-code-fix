@@ -10,18 +10,19 @@ using System.Threading.Tasks;
 using Serilog.Core;
 using Buildalyzer;
 using Buildalyzer.Workspaces;
+using Microsoft.CodeAnalysis.CodeActions;
 
 namespace DotNetCodeFix {
     public class Utlity {
 
         static Logger Logger = Log.New();
 
-        public static Project CreateRoslynProject(string path) {
+        public static (Workspace, Project) CreateRoslynProject(string path) {
             var manager = new AnalyzerManager();
             var project = manager.GetProject(path);
             var workspace = new AdhocWorkspace();
             var roslyn = project.AddToWorkspace(workspace, true);
-            return roslyn;
+            return (workspace, roslyn);
         }
 
         public static ImmutableArray<DiagnosticAnalyzer> GetAllAnalyzers() {
@@ -55,10 +56,24 @@ namespace DotNetCodeFix {
             return dict.ToImmutableDictionary();
         }
 
+        public static (Solution, Document) Fix(Document document, Diagnostic dig, CodeFixProvider fixer) {
+            var actions = new List<CodeAction>();
+            var context = new CodeFixContext(document, dig, (c, d) => {
+                Logger.Information("CodeAction = {C}", c);
+                Logger.Information("Diagnositc = {D}", d);
+                actions.Add(c);
+            }, CancellationToken.None);
+
+            fixer.RegisterCodeFixesAsync(context).Wait();
+
+            var operations = actions[0].GetOperationsAsync(CancellationToken.None).Result;
+            var solution = operations.OfType<ApplyChangesOperation>().Single().ChangedSolution;
+            var newDocument = solution.GetDocument(document.Id);
+            return (solution, newDocument);
+        }
+
 
         public static async Task<ImmutableArray<Diagnostic>> GetProjectAnalyzerDiagnosticsAsync(Project project, ImmutableArray<DiagnosticAnalyzer> analzyers) {
-
-
             var cancel = new CancellationTokenSource();
             var supportedDiagnosticsSpecificOptions = new Dictionary<string, ReportDiagnostic>();
             analzyers.Select(x => x.SupportedDiagnostics).SelectMany(x => x).ToList().ForEach(x => {

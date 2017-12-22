@@ -15,7 +15,7 @@ namespace DotNetCodeFix.Fixers {
         private const DiagnosticSeverity Severity = DiagnosticSeverity.Warning;
 
         private static readonly string Category = "AsyncMethodWithoutAsyncSuffixAnalyzer-Category";
-        private static readonly string Message = "AsyncMethodWithoutAsyncSuffixAnalyzer-Message";
+        private static readonly string Message = "AsyncMethodWithoutAsyncSuffixAnalyzer-Message {0}";
         private static readonly string Title = "AsyncMethodWithoutAsyncSuffixAnalyzer-Title";
 
         //private static readonly string Category = VSDiagnosticsResources.AsyncCategory;
