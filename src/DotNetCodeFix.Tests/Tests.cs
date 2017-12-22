@@ -43,7 +43,29 @@ namespace DotNetCodeFix.Tests {
             }
         }
 
+
         [Fact]
+        public async Task ApplyChanges() {
+            var (workspace, project) = Utlity.CreateRoslynProject(projectPath);
+            workspace.WorkspaceFailed += (a, e) => {
+                logger.Error(e.ToString());
+            };
+
+            var doc = project.Documents.First();
+            var text = await doc.GetTextAsync();
+
+            logger.Information("Path = {0}", doc.FilePath);
+
+            var oldSolution = workspace.CurrentSolution;
+
+            var sourceText = SourceText.From(text + "\naaaa");
+            var newSolution = oldSolution.WithDocumentText(doc.Id, sourceText);
+            var rs = workspace.TryApplyChanges(newSolution);
+            Assert.Equal(true, rs);
+        }
+
+
+        //[Fact]
         public async Task Fix() {
 
             var id = nameof(AsyncMethodWithoutAsyncSuffixAnalyzer);
