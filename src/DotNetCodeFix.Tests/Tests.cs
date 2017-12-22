@@ -43,8 +43,17 @@ namespace DotNetCodeFix.Tests {
             }
         }
 
-
         [Fact]
+        public void AddDocument() {
+            var (workspace, project) = Utlity.CreateRoslynProject(projectPath);
+            var wk = project.Solution.Workspace;
+            var document = project.AddDocument("Readme.txt", "Hello!");
+            var solution = document.Project.Solution;
+            var rs = wk.TryApplyChanges(solution);
+            Assert.Equal(true, rs);
+        }
+
+        //[Fact]
         public async Task ApplyChanges() {
             var (workspace, project) = Utlity.CreateRoslynProject(projectPath);
             workspace.WorkspaceFailed += (a, e) => {
