@@ -10,22 +10,10 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using System.Threading;
 
-<<<<<<< HEAD:src/DotNetCodeFix/Program.cs
-namespace DotNetCodeFix
-{
-    class Program
-    {
-        static async Task Main(string[] args)
-        {
-            // Environment.SetEnvironmentVariable("MSBUILD_EXE_PATH", "/Library/Frameworks/Mono.framework/Versions/Current/Commands/msbuild");
-            Environment.SetEnvironmentVariable("MSBUILD_EXE_PATH", "/usr/local/share/dotnet/sdk/2.1.2/MSBuild.dll");
-
-=======
 namespace DotNetCodeFix {
     class Program {
         static async Task Main(string[] args) {
             Environment.SetEnvironmentVariable("MSBUILD_EXE_PATH", "/Library/Frameworks/Mono.framework/Versions/Current/Commands/msbuild");
->>>>>>> 98ec070f8353e0292a35cd17462ddbebea30c413:tests/DotNetCodeFix/Program.cs
             Environment.SetEnvironmentVariable("COREHOST_TRACE", "1");
 
             Environment.SetEnvironmentVariable("MSBuildSDKsPath", "/usr/local/share/dotnet/sdk/2.1.2/Sdks");
@@ -61,25 +49,19 @@ namespace DotNetCodeFix {
             var allTypes = compilation.Assembly.TypeNames;
             Console.WriteLine($"Types: {string.Join(", ", allTypes)}");
 
-<<<<<<< HEAD:src/DotNetCodeFix/Program.cs
-            foreach (var analyzer in analyzers)
-            {
-=======
+            var analyzer = analyzers.First();
 
-            foreach (var analyzer in analyzers) {
->>>>>>> 98ec070f8353e0292a35cd17462ddbebea30c413:tests/DotNetCodeFix/Program.cs
-                var diagnosticResults = await compilation.WithAnalyzers(ImmutableArray.Create(analyzer)).GetAllDiagnosticsAsync();
-                //var interestingResults = diagnosticResults.Where(x => x.Severity != DiagnosticSeverity.Hidden).ToArray();
-                var interestingResults = diagnosticResults.ToArray();
-                if (interestingResults.Any()) {
-                    Console.WriteLine($"Results for analyzer: {analyzer}");
-                }
+            var diagnosticResults = await compilation.WithAnalyzers(ImmutableArray.Create(analyzer)).GetAllDiagnosticsAsync();
+            //var interestingResults = diagnosticResults.Where(x => x.Severity != DiagnosticSeverity.Hidden).ToArray();
+            var interestingResults = diagnosticResults.ToArray();
+            if (interestingResults.Any()) {
+                Console.WriteLine($"Results for analyzer: {analyzer}");
+            }
 
-                foreach (var diagnostic in interestingResults) {
-                    if (diagnostic.Severity != DiagnosticSeverity.Hidden) {
-                        Console.WriteLine($"Severity: {diagnostic.Severity}");
-                        Console.WriteLine($"Message: {diagnostic.GetMessage()}");
-                    }
+            foreach (var diagnostic in interestingResults) {
+                if (diagnostic.Severity != DiagnosticSeverity.Hidden) {
+                    Console.WriteLine($"Severity: {diagnostic.Severity}");
+                    Console.WriteLine($"Message: {diagnostic.GetMessage()}");
                 }
             }
         }
