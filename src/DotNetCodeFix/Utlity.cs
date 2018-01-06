@@ -87,6 +87,8 @@ namespace DotNetCodeFix {
             var compalationWithAnalyzers = compilation.WithAnalyzers(analzyers, cancellationToken: cancel.Token);
             var diagnostics = await compalationWithAnalyzers.GetAllDiagnosticsAsync();
 
+            var result = compalationWithAnalyzers.GetAnalysisResultAsync(cancel.Token);
+
             Logger.Information("get diagnostics - {0}", project.FilePath);
             Logger.Information("count - {0}", diagnostics.Count());
 

@@ -104,5 +104,32 @@ namespace DotNetCodeFix.Tests {
                 Assert.Equal(true, ok);
             }
         }
+
+        [Fact]
+        public async Task Fix2() {
+
+            var id = nameof(AsyncMethodWithoutAsyncSuffixAnalyzer);
+
+            var (wk, project) = Utlity.CreateRoslynProject(projectPath);
+
+            wk.WorkspaceFailed += (e, a) => {
+                logger.Error(a.Diagnostic.Message);
+            };
+
+            var analizers = Utlity.GetAllAnalyzers();
+            var fixers = Utlity.GetAllFixers();
+            var diagnostics = await Utlity.GetProjectAnalyzerDiagnosticsAsync(project, analizers);
+
+            var fixer = fixers.First().Value.First();
+
+            foreach (var dig in diagnostics.Where(x => x.Id == id)) {
+                var path = dig.Location.SourceTree.FilePath;
+                var document = project.Documents.First(x => x.FilePath == path);
+
+                var text = File.ReadAllText(path);
+                var (sln, newDocument) = Utlity.Fix(document, dig, fixer);
+                Console.WriteLine(newDocument.GetTextAsync().Result);
+            }
+        }
     }
 }
