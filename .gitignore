@@ -5,3 +5,4 @@ packages
 *.temp
 *.tmp
 publish
+.gh-release.json
