@@ -4,23 +4,23 @@ using System.Threading.Tasks;
 namespace MyApp {
     class Program {
 
-        static async Task Go3Async() {
+        static async Task Go3() {
             await Task.Run(() => { });
         }
 
-        static async Task Go2Async() {
+        static async Task Go2() {
             await Task.Run(() => { });
         }
-        static async Task Go1Async() {
+        static async Task Go1() {
             await Task.Run(() => { });
         }
 
         static void Main(string[] args) {
             Console.WriteLine("Hello World!");
 
-            Go1Async().GetAwaiter().GetResult();
-            Go2Async().GetAwaiter().GetResult();
-            Go3Async().GetAwaiter().GetResult();
+            Go1().GetAwaiter().GetResult();
+            Go2().GetAwaiter().GetResult();
+            Go3().GetAwaiter().GetResult();
         }
     }
 }
